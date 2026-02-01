@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Iron Lady – Program Management</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="logo">Iron Lady</div>
+        <nav>
+    <a class="active">📋 <span>Program Management</span></a>
+    <a>📝 <span>Applications</span></a>
+    <a>👥 <span>Users</span></a>
+    <a>⚙️ <span>Settings</span></a>
+</nav>
+
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main">
+
+        <!-- TOP BAR -->
+        <header class="topbar">
+    <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+    <h2>Program Management</h2>
+
+    <!-- THEME TOGGLE (MISSING EARLIER) -->
+    <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+</header>
+
+
+
+        <!-- CONTENT -->
+        <section class="content">
+
+            <!-- FORM CARD -->
+            <div class="card form-card">
+                <h3>Add Program</h3>
+
+                <input type="text" id="name" placeholder="Program Name">
+                <input type="text" id="duration" placeholder="Duration">
+                <input type="text" id="status" placeholder="Status">
+
+                <button onclick="addProgram()">Add Program</button>
+            </div>
+
+            <!-- TABLE CARD -->
+            <div class="card table-card">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Program</th>
+                            <th>Duration</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="programList"></tbody>
+                </table>
+            </div>
+
+        </section>
+    </div>
+
+</div>
+
+<script>
+function addProgram() {
+    const name = document.getElementById("name").value;
+    const duration = document.getElementById("duration").value;
+    const status = document.getElementById("status").value;
+
+    fetch("program", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `name=${encodeURIComponent(name)}&duration=${encodeURIComponent(duration)}&status=${encodeURIComponent(status)}`
+    }).then(() => loadPrograms());
+}
+
+function loadPrograms() {
+    fetch("program")
+        .then(res => res.text())
+        .then(data => {
+            const tbody = document.getElementById("programList");
+            tbody.innerHTML = "";
+
+            const lines = data.trim().split("\n");
+
+            lines.forEach((line, i) => {
+                if (!line) return;
+
+                const parts = line.substring(line.indexOf(" ") + 1).split("|");
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td>${parts[0].trim()}</td>
+                        <td>${parts[1].trim()}</td>
+                        <td>${parts[2].trim()}</td>
+                        <td>
+                            <button class="edit-btn" onclick="editProgram(${i})">Edit</button>
+                            <button class="delete-btn" onclick="deleteProgram(${i})">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        });
+}
+
+function deleteProgram(index) {
+    fetch(`program?index=${index}`, { method: "DELETE" })
+        .then(() => loadPrograms());
+}
+
+function editProgram(index) {
+    const name = prompt("Enter new program name:");
+    const duration = prompt("Enter new duration:");
+    const status = prompt("Enter new status:");
+
+    if (name && duration && status) {
+        fetch("program", {
+            method: "PUT",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `index=${index}&name=${encodeURIComponent(name)}&duration=${encodeURIComponent(duration)}&status=${encodeURIComponent(status)}`
+        }).then(() => loadPrograms());
+    }
+}
+function toggleSidebar() {
+    document.querySelector(".app").classList.toggle("collapsed");
+}
+
+function toggleTheme() {
+    document.body.classList.toggle("dark");
+}
+
+
+
+window.onload = loadPrograms;
+
+</script>
+
+</body>
+</html>
+
